@@ -4,13 +4,31 @@ param (
     # The data to validate against, if the program works or not
     $testData,
     # The file that validates if the program works or not according to testData
-    $tester = "Match.java",
+    $tester = "$PSScriptRoot\Match.java",
     [String[]] $runArgs
 )
 
 function build($f, $argsArray) {
-    javac $f
-    java $((Get-Item $f).BaseName) $argsArray
+    $fullFile = $f
+    $fileName = (Get-Item $f).BaseName
+    $extension = (Get-Item $f).Extension.Substring(1)
+    switch ($extension) {
+        "java" {
+            javac $fullFile
+            # Java requires only the short class name, and assumes local directory
+            $fullFileDir = (Get-Item $fileToValidate).Directory
+            cd (Get-Item $f).Directory
+            java $fileName $argsArray
+            cd $fullFileDir
+        }
+        "cpp" {
+            clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks
+            & $("./" + $fileName + ".exe")
+        }
+        default {
+            Write_Error "File extension not recognized as a buildable file type"
+        }
+    }
 }
 
 # Sets output to a list of lines
