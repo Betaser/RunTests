@@ -32,18 +32,26 @@ function build($f, $argsArray) {
 }
 
 # Sets output to a list of lines
-$output = @((build $fileToValidate $runArgs))
-$testData = Get-Content $testData
+# Ok, Get-Content without -raw strips newlines, and so does output
+
+$RawOutput = "RawOutput.txt"
+build $fileToValidate $runArgs *> $RawOutput
+$output = (Get-Content $RawOutput -raw).split("`n")
+$output = $output.replace("`"", "\`"")
+rm $RawOutput
+
+$testData = (Get-Content $testData -raw).split("`n")
+$testData = $testData.replace("`"", "\`"")
 
 Write-Host "Running test `"$tester`"..."
 
 # Let's define the lists of strings by specifying the length of the first list as the first element of the large list
 $argsList = New-Object System.Collections.Generic.List[System.Object]
-$argsList.Add($output.Count)
+$argsList.Add($output.Count - 1)
 foreach ($line in $output) {
     $argsList.Add($line)
 }
 foreach ($line in $testData) {
     $argsList.Add($line)
 }
-build $tester $argsList.ToArray()
+build $tester $argsList

@@ -21,18 +21,28 @@ public class Match {
         compare(firstArray, secondArray);
     }
 
+    static String msg; 
+
     // Print out a custom message of validation success vs failure
     static void compare(String[] firstArray, String[] secondArray) {
         if (validate(firstArray, secondArray))
             System.err.println("Test succeeded");
         else
-            System.err.println("Test failed");
+            System.err.println("Test failed" + (msg == null ? "" : " " + msg));
     }
 
     static boolean validate(String[] firstArray, String[] secondArray) {
-        if (firstArray.length != secondArray.length) return false;
+        if (firstArray.length != secondArray.length) {
+            int i = 0;
+            i = 0;
+            msg = "because file1 outputs " + firstArray.length + " lines vs file2 having " + secondArray.length;
+            return false;
+        }
         for (int i = 0; i < firstArray.length; i++)
-            if (!firstArray[i].equals(secondArray[i])) return false;
+            if (!firstArray[i].equals(secondArray[i])) {
+                msg = "at line " + i;
+                return false;
+            }
         
         return true;
     }
