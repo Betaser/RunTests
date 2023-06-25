@@ -8,6 +8,8 @@ param (
     [String[]] $runArgs
 )
 
+$buildErr = $null
+
 function build($f, $argsArray) {
     $fullFile = $f
     $fileName = (Get-Item $f).BaseName
@@ -22,8 +24,14 @@ function build($f, $argsArray) {
             cd $fullFileDir
         }
         "cpp" {
-            clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks
-            & $("./" + $fileName + ".exe")
+            clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks *> MaybeErr.txt
+            $builtIt = [String]::IsNullOrWhiteSpace((Get-Content MaybeErr.txt))
+            if ($builtIt) {
+                & $("./" + $fileName + ".exe")
+            } else {
+                throw $buildErr
+                return
+            }
         }
         default {
             Write_Error "File extension not recognized as a buildable file type"
@@ -34,11 +42,19 @@ function build($f, $argsArray) {
 # Sets output to a list of lines
 # Ok, Get-Content without -raw strips newlines, and so does output
 
-$RawOutput = "RawOutput.txt"
-build $fileToValidate $runArgs *> $RawOutput
-$output = (Get-Content $RawOutput -raw).split("`n")
+$rawOutput = "RawOutput.txt"
+Write-Host "building $fileToValidate"
+try {
+    $out = build $fileToValidate $runArgs
+    $out *> $rawOutput
+} catch {
+    Write-Error $_
+    Write-Host "File failed to build."
+    exit
+}
+$output = (Get-Content $rawOutput -raw).split("`n")
 $output = $output.replace("`"", "\`"")
-rm $RawOutput
+rm $rawOutput
 
 $testData = (Get-Content $testData -raw).split("`n")
 $testData = $testData.replace("`"", "\`"")
