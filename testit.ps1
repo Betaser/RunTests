@@ -32,7 +32,7 @@ function build($f, $argsArray) {
                 throw Get-Content MaybeErr.txt
                 return
             }
-            #rm MaybeErr.txt
+            rm MaybeErr.txt
         }
         default {
             Write_Error "File extension not recognized as a buildable file type"
