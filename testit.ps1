@@ -5,7 +5,8 @@ param (
     $testData,
     # The file that validates if the program works or not according to testData
     $tester = "$PSScriptRoot\Match.java",
-    [String[]] $runArgs
+    [String[]] $runArgs,
+    [String[]] $matchArgs
 )
 
 $buildErr = $null
@@ -72,5 +73,8 @@ foreach ($line in $output) {
 }
 foreach ($line in $testData) {
     $argsList.Add($line)
+}
+foreach ($argu in $matchArgs) {
+    $argsList.Add($argu)
 }
 build $tester $argsList
