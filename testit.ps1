@@ -25,15 +25,20 @@ function build($f, $argsArray) {
             cd $fullFileDir
         }
         "cpp" {
-            clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks 6> MaybeErr.txt
-            $builtIt = [String]::IsNullOrWhiteSpace((Get-Content MaybeErr.txt))
+            clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks 2> MaybeErr.txt
+            $maybeErr = Get-Content MaybeErr.txt
+            $maybeErr = [System.String]::Join("", $maybeErr)
+            rm MaybeErr.txt
+            $builtIt = [String]::IsNullOrWhiteSpace($maybeErr)
             if ($builtIt) {
                 & $("./" + $fileName + ".exe")
             } else {
-                throw Get-Content MaybeErr.txt
+                $clangPlusPlusIndex = $maybeErr.LastIndexOf("clang++")
+                $maybeErr = $maybeErr.Substring(0, $clangPlusPlusIndex)
+                $maybeErr = $maybeErr.Substring(0, $maybeErr.LastIndexOf("+"))
+                throw $maybeErr
                 return
             }
-            rm MaybeErr.txt
         }
         default {
             Write_Error "File extension not recognized as a buildable file type"
@@ -52,7 +57,6 @@ try {
 } catch {
     $err = $_
     Write-Host $_
-    #Write-Host "$($err[0].ToString()) $($err[0].InvocationInfo.PositionMessage)"
     Write-Host "File failed to build."
     exit
 }
