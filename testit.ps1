@@ -27,7 +27,7 @@ function build($f, $argsArray) {
         "cpp" {
             clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks 2> MaybeErr.txt
             $maybeErr = Get-Content MaybeErr.txt
-            $maybeErr = [System.String]::Join("", $maybeErr)
+            $maybeErr = [String]::Join("", $maybeErr)
             rm MaybeErr.txt
             $builtIt = [String]::IsNullOrWhiteSpace($maybeErr)
             if ($builtIt) {
