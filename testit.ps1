@@ -27,18 +27,15 @@ function build($f, $argsArray) {
         "cpp" {
             clang++ -o $fileName $($fileName + "." + $extension) -fno-delete-null-pointer-checks 2> MaybeErr.txt
             $maybeErr = Get-Content MaybeErr.txt
-            $maybeErr = [String]::Join("", $maybeErr)
-            rm MaybeErr.txt
-            $builtIt = [String]::IsNullOrWhiteSpace($maybeErr)
-            if ($builtIt) {
-                & $("./" + $fileName + ".exe")
-            } else {
-                $clangPlusPlusIndex = $maybeErr.LastIndexOf("clang++")
-                $maybeErr = $maybeErr.Substring(0, $clangPlusPlusIndex)
-                $maybeErr = $maybeErr.Substring(0, $maybeErr.LastIndexOf("+"))
+            if ($maybeErr -ne $null) {
+                $maybeErr = [String]::Join("", $maybeErr)
+                $atTilda = $maybeErr.IndexOf("~~~")
+                $atNativeCommandError = $maybeErr.LastIndexOf("NativeCommandError ")
+                $maybeErr = $maybeErr.Substring(0, $atTilda) + $maybeErr.Substring($atNativeCommandError + "NativeCommandError".Length)
                 throw $maybeErr
                 return
             }
+            & $(".\" + $fileName + ".exe")
         }
         default {
             Write_Error "File extension not recognized as a buildable file type"
@@ -49,17 +46,17 @@ function build($f, $argsArray) {
 # Sets output to a list of lines
 # Ok, Get-Content without -raw strips newlines, and so does output
 
-$rawOutput = "RawOutput.txt"
 Write-Host "building $fileToValidate"
+$rawOutput = "RawOutput.txt"
 try {
     $out = build $fileToValidate $runArgs
     $out *> $rawOutput
 } catch {
-    $err = $_
     Write-Host $_
     Write-Host "File failed to build."
     exit
 }
+
 $output = (Get-Content $rawOutput -raw).split("`n")
 $output = $output.replace("`"", "\`"")
 rm $rawOutput
